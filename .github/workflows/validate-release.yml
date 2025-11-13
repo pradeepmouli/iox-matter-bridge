@@ -215,16 +215,13 @@ jobs:
           script: |
             const fs = require('fs');
             const report = fs.readFileSync('validation_report.md', 'utf8');
-            
-            await github.rest.repos.createReleaseDiscussion({
+            const releaseTag = '${{ steps.release.outputs.tag_name }}';
+            await github.rest.issues.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              release_id: ${{ steps.release.outputs.release_id }},
+              title: `Release validation failed for ${releaseTag}`,
               body: report
-            }).catch(err => {
-              console.log('Could not create discussion, posting as issue instead');
             });
-
       - name: Upload validation report
         uses: actions/upload-artifact@v4
         with:
