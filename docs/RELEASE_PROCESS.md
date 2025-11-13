@@ -39,7 +39,6 @@ The release automation in udi-js performs these steps:
    
 3. **Generate Artifacts**:
    - `iox-matter-bridge-vX.Y.Z.tar.gz` - Compressed tarball
-   - `iox-matter-bridge-vX.Y.Z.zip` - Compressed zip (Windows)
    - `iox-matter-bridge-vX.Y.Z.sbom.json` - SBOM (Syft/CycloneDX)
    - `checksums-vX.Y.Z.txt` - SHA256 checksums
    - `iox-matter-bridge-vX.Y.Z.tar.gz.sig` - GPG signature (optional)
