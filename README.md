@@ -56,7 +56,6 @@ Each release includes:
 | Artifact | Description |
 |----------|-------------|
 | `iox-matter-bridge-v{version}.tar.gz` | Packaged server build (Linux/macOS) |
-| `iox-matter-bridge-v{version}.zip` | Packaged server build (Windows) |
 | `iox-matter-bridge-v{version}.sbom.json` | Software Bill of Materials |
 | `checksums-v{version}.txt` | SHA256 integrity manifest |
 | `iox-matter-bridge-v{version}.tar.gz.sig` | GPG signature (when available) |
