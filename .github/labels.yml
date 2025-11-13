@@ -1,0 +1,110 @@
+# Labels for iox-matter-bridge repository
+# This file defines labels for categorizing issues and PRs
+# Run the sync-labels workflow to apply these labels
+
+labels:
+  # Release-related labels
+  - name: "release"
+    color: "0366d6"
+    description: "General release-related issues"
+  
+  - name: "artifact"
+    color: "d73a4a"
+    description: "Problems with a distributed bundle or artifact"
+  
+  # Deployment and usage labels
+  - name: "install"
+    color: "0e8a16"
+    description: "Installation or deployment troubles"
+  
+  - name: "upgrade"
+    color: "fbca04"
+    description: "Issues related to upgrading between versions"
+  
+  - name: "runtime"
+    color: "d876e3"
+    description: "Runtime issues with released versions"
+  
+  # Bug tracking
+  - name: "regression"
+    color: "d93f0b"
+    description: "Reports of regressions post-upgrade"
+  
+  - name: "bug"
+    color: "d73a4a"
+    description: "Something isn't working as expected"
+  
+  # Security
+  - name: "security"
+    color: "b60205"
+    description: "Vulnerability or security concern"
+  
+  # Documentation
+  - name: "documentation"
+    color: "0075ca"
+    description: "Improvements or additions to documentation"
+  
+  # Issue triage
+  - name: "needs-triage"
+    color: "ffffff"
+    description: "Needs initial review and categorization"
+  
+  - name: "duplicate"
+    color: "cfd3d7"
+    description: "This issue already exists"
+  
+  - name: "invalid"
+    color: "e4e669"
+    description: "This doesn't seem right or is not applicable"
+  
+  - name: "wontfix"
+    color: "ffffff"
+    description: "This will not be worked on"
+  
+  # Redirects
+  - name: "redirect-to-udi-js"
+    color: "fef2c0"
+    description: "Issue should be reported in the udi-js repository"
+  
+  # Priority labels
+  - name: "priority: critical"
+    color: "b60205"
+    description: "Critical priority - blocks usage"
+  
+  - name: "priority: high"
+    color: "d93f0b"
+    description: "High priority - significant impact"
+  
+  - name: "priority: medium"
+    color: "fbca04"
+    description: "Medium priority - moderate impact"
+  
+  - name: "priority: low"
+    color: "0e8a16"
+    description: "Low priority - minor impact"
+  
+  # Platform-specific
+  - name: "platform: linux"
+    color: "c5def5"
+    description: "Linux-specific issue"
+  
+  - name: "platform: macos"
+    color: "c5def5"
+    description: "macOS-specific issue"
+  
+  - name: "platform: windows"
+    color: "c5def5"
+    description: "Windows-specific issue"
+  
+  # Status labels
+  - name: "status: investigating"
+    color: "ededed"
+    description: "Currently investigating the issue"
+  
+  - name: "status: waiting-for-upstream"
+    color: "ededed"
+    description: "Waiting for fix in udi-js repository"
+  
+  - name: "status: need-more-info"
+    color: "d4c5f9"
+    description: "Needs more information from reporter"

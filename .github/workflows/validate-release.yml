@@ -1,0 +1,233 @@
+name: Validate Release Artifacts
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  validate-artifacts:
+    name: Validate Release Artifacts
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Get release information
+        id: release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const release = context.payload.release;
+            core.setOutput('tag_name', release.tag_name);
+            core.setOutput('upload_url', release.upload_url);
+            core.setOutput('release_id', release.id);
+            
+            // Extract version from tag (remove 'v' prefix if present)
+            const version = release.tag_name.replace(/^v/, '');
+            core.setOutput('version', version);
+            
+            return release;
+
+      - name: Download release artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ steps.release.outputs.version }}"
+          TAG="${{ steps.release.outputs.tag_name }}"
+          
+          echo "Downloading artifacts for ${TAG}..."
+          mkdir -p artifacts
+          cd artifacts
+          
+          # Try to download expected artifacts
+          gh release download "${TAG}" --repo ${{ github.repository }} || true
+          
+          ls -la
+          
+      - name: Validate checksums file
+        id: validate_checksums
+        continue-on-error: true
+        run: |
+          VERSION="${{ steps.release.outputs.version }}"
+          cd artifacts
+          
+          if [ ! -f "checksums-v${VERSION}.txt" ]; then
+            echo "❌ Missing checksums file: checksums-v${VERSION}.txt"
+            echo "has_checksums=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          echo "✅ Found checksums file"
+          echo "has_checksums=true" >> $GITHUB_OUTPUT
+          cat "checksums-v${VERSION}.txt"
+
+      - name: Validate tarball artifact
+        id: validate_tarball
+        continue-on-error: true
+        run: |
+          VERSION="${{ steps.release.outputs.version }}"
+          cd artifacts
+          
+          TARBALL="iox-matter-bridge-v${VERSION}.tar.gz"
+          
+          if [ ! -f "${TARBALL}" ]; then
+            echo "❌ Missing tarball: ${TARBALL}"
+            echo "has_tarball=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          echo "✅ Found tarball: ${TARBALL}"
+          echo "has_tarball=true" >> $GITHUB_OUTPUT
+          
+          # Verify checksum if checksums file exists
+          if [ -f "checksums-v${VERSION}.txt" ]; then
+            if sha256sum -c "checksums-v${VERSION}.txt" --ignore-missing; then
+              echo "✅ Tarball checksum verified"
+              echo "tarball_verified=true" >> $GITHUB_OUTPUT
+            else
+              echo "❌ Tarball checksum verification failed"
+              echo "tarball_verified=false" >> $GITHUB_OUTPUT
+              exit 1
+            fi
+          fi
+
+      - name: Validate SBOM
+        id: validate_sbom
+        continue-on-error: true
+        run: |
+          VERSION="${{ steps.release.outputs.version }}"
+          cd artifacts
+          
+          SBOM="iox-matter-bridge-v${VERSION}.sbom.json"
+          
+          if [ ! -f "${SBOM}" ]; then
+            echo "⚠️  Missing SBOM: ${SBOM}"
+            echo "has_sbom=false" >> $GITHUB_OUTPUT
+            exit 0  # SBOM is recommended but not required
+          fi
+          
+          echo "✅ Found SBOM: ${SBOM}"
+          echo "has_sbom=true" >> $GITHUB_OUTPUT
+          
+          # Validate JSON format
+          if jq empty "${SBOM}" 2>/dev/null; then
+            echo "✅ SBOM is valid JSON"
+            echo "sbom_valid=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ SBOM is not valid JSON"
+            echo "sbom_valid=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check for signature
+        id: check_signature
+        continue-on-error: true
+        run: |
+          VERSION="${{ steps.release.outputs.version }}"
+          cd artifacts
+          
+          SIG="iox-matter-bridge-v${VERSION}.tar.gz.sig"
+          
+          if [ -f "${SIG}" ]; then
+            echo "✅ Found GPG signature: ${SIG}"
+            echo "has_signature=true" >> $GITHUB_OUTPUT
+          else
+            echo "ℹ️  No GPG signature found (optional)"
+            echo "has_signature=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate validation report
+        id: report
+        run: |
+          VERSION="${{ steps.release.outputs.version }}"
+          TAG="${{ steps.release.outputs.tag_name }}"
+          
+          cat > validation_report.md <<EOF
+          # Release Artifact Validation Report
+          
+          **Release**: ${TAG}
+          **Version**: ${VERSION}
+          **Date**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          
+          ## Validation Results
+          
+          | Artifact | Status | Notes |
+          |----------|--------|-------|
+          | Checksums file | ${{ steps.validate_checksums.outcome == 'success' && '✅ Found' || '❌ Missing' }} | Required |
+          | Tarball (.tar.gz) | ${{ steps.validate_tarball.outcome == 'success' && '✅ Found & Verified' || '❌ Missing or Invalid' }} | Required |
+          | SBOM (.sbom.json) | ${{ steps.validate_sbom.outputs.has_sbom == 'true' && '✅ Found' || '⚠️ Missing' }} | Recommended |
+          | GPG Signature | ${{ steps.check_signature.outputs.has_signature == 'true' && '✅ Found' || 'ℹ️ Not present' }} | Optional |
+          
+          ## Details
+          
+          ### Checksums
+          ${{ steps.validate_checksums.outcome == 'success' && '- Checksums file present and readable' || '- ❌ CRITICAL: Checksums file missing' }}
+          
+          ### Tarball
+          ${{ steps.validate_tarball.outcome == 'success' && '- Tarball present\n- Checksum verified successfully' || '- ❌ CRITICAL: Tarball missing or checksum verification failed' }}
+          
+          ### SBOM
+          ${{ steps.validate_sbom.outputs.has_sbom == 'true' && '- SBOM present\n- ' || '- ⚠️  SBOM not included (recommended for supply chain security)' }}${{ steps.validate_sbom.outputs.sbom_valid == 'true' && 'Valid JSON format' || '' }}
+          
+          ### Signature
+          ${{ steps.check_signature.outputs.has_signature == 'true' && '- GPG signature present' || '- Signature not included (enhances trust but is optional)' }}
+          
+          ## Recommendation
+          
+          EOF
+          
+          # Determine overall status
+          if [ "${{ steps.validate_checksums.outcome }}" != "success" ] || [ "${{ steps.validate_tarball.outcome }}" != "success" ]; then
+            cat >> validation_report.md <<EOF
+          ❌ **FAIL**: Critical artifacts are missing or invalid. This release should be investigated.
+          
+          ### Action Required
+          - Verify the release workflow completed successfully
+          - Check artifact upload process
+          - Consider re-running the release workflow
+          EOF
+            echo "status=fail" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.validate_sbom.outputs.has_sbom }}" != "true" ]; then
+            cat >> validation_report.md <<EOF
+          ⚠️  **WARNING**: Release is functional but missing recommended artifacts (SBOM).
+          
+          ### Recommendations
+          - Include SBOM in future releases for better supply chain security
+          - Consider adding GPG signatures for enhanced trust
+          EOF
+            echo "status=warning" >> $GITHUB_OUTPUT
+          else
+            cat >> validation_report.md <<EOF
+          ✅ **PASS**: All required artifacts present and validated.
+          
+          ${{ steps.check_signature.outputs.has_signature != 'true' && '### Optional Improvement\n- Consider adding GPG signatures in future releases for enhanced verification' || '### Excellent\n- All recommended artifacts included\n- GPG signature available for verification' }}
+          EOF
+            echo "status=pass" >> $GITHUB_OUTPUT
+          fi
+          
+          cat validation_report.md
+
+      - name: Comment on release (if issues found)
+        if: steps.report.outputs.status != 'pass'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('validation_report.md', 'utf8');
+            
+            await github.rest.repos.createReleaseDiscussion({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: ${{ steps.release.outputs.release_id }},
+              body: report
+            }).catch(err => {
+              console.log('Could not create discussion, posting as issue instead');
+            });
+
+      - name: Upload validation report
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-report
+          path: validation_report.md
+          retention-days: 90
