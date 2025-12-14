@@ -1,8 +1,11 @@
 blank_issues_enabled: false
 contact_links:
-  - name: Feature Requests & Development Issues
+  - name: Development Issues & Source Code
     url: https://github.com/pradeepmouli/udi-js/issues
-    about: For feature requests and development-related issues, please use the udi-js repository
-  - name: Documentation
+    about: For development-related issues and source code contributions, please use the udi-js repository
+  - name: Release Notes & Documentation
     url: https://github.com/pradeepmouli/iox-matter-bridge/releases
     about: Check release notes and documentation for usage information
+  - name: Installation Guide
+    url: https://github.com/pradeepmouli/iox-matter-bridge/blob/main/docs/INSTALLATION.md
+    about: Detailed installation instructions for IoX Matter Bridge

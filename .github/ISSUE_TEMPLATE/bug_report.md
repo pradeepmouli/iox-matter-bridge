@@ -46,6 +46,9 @@ assignees: []
 Paste relevant logs, error messages, or stack traces here
 ```
 
+**Attach log files (optional):**
+<!-- You can attach log files by dragging and dropping them here or clicking to browse -->
+
 ## Configuration
 
 **Relevant configuration:**
@@ -54,6 +57,10 @@ Paste relevant logs, error messages, or stack traces here
 ```yaml
 # Your configuration here
 ```
+
+**Attach configuration files (optional):**
+<!-- You can attach config files by dragging and dropping them here or clicking to browse -->
+<!-- Please ensure sensitive information is redacted before attaching -->
 
 ## Additional Context
 
