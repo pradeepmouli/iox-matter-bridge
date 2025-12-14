@@ -43,10 +43,6 @@ labels:
     color: "a2eeef"
     description: "New feature or enhancement request"
   
-  - name: "feature-request"
-    color: "a2eeef"
-    description: "Feature request for IoX Matter Bridge"
-  
   # Sync tracking
   - name: "synced-to-udi-js"
     color: "bfdadc"

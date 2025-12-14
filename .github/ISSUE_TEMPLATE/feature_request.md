@@ -2,7 +2,7 @@
 name: Feature Request
 about: Suggest a new feature or enhancement for IoX Matter Bridge
 title: "[FEATURE] "
-labels: ["enhancement", "feature-request", "needs-triage"]
+labels: ["enhancement", "needs-triage"]
 assignees: []
 ---
 
