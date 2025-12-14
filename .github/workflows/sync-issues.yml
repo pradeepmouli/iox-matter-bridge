@@ -52,20 +52,7 @@ jobs:
           script: |
             const issue = context.payload.issue;
             
-            // Prepare issue body with reference to original issue
-            const issueBody = `
-            **Synced from:** ${issue.html_url}
-            **Original Author:** @${issue.user.login}
-            **Created:** ${issue.created_at}
             
-            ---
-            
-            ${issue.body || 'No description provided.'}
-            
-            ---
-            
-            *This issue was automatically created from the [iox-matter-bridge repository](${issue.html_url}). Please keep discussions in this repository.*
-            `;
             
             try {
               // NOTE: Cross-repository issue creation requires a Personal Access Token (PAT)
