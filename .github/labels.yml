@@ -34,6 +34,24 @@ labels:
     color: "d73a4a"
     description: "Something isn't working as expected"
   
+  # Feature and enhancement labels
+  - name: "device-support"
+    color: "a2eeef"
+    description: "Request for new device support or device compatibility issues"
+  
+  - name: "enhancement"
+    color: "a2eeef"
+    description: "New feature or enhancement request"
+  
+  # Sync tracking
+  - name: "synced-to-udi-js"
+    color: "bfdadc"
+    description: "Issue has been synced to udi-js repository"
+  
+  - name: "copilot-tracked"
+    color: "bfdadc"
+    description: "Issue is being tracked by copilot"
+  
   # Security
   - name: "security"
     color: "b60205"

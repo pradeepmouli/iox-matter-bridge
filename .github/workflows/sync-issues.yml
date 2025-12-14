@@ -1,0 +1,203 @@
+name: Sync Issues to udi-js
+
+on:
+  issues:
+    types: [opened, labeled]
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  sync-to-udi-js:
+    name: Sync Issue to udi-js Repository
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check if issue should be synced
+        id: check
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const labels = issue.labels.map(l => l.name);
+            
+            // Check if this is a new issue that should be synced
+            const syncLabels = ['device-support', 'enhancement', 'bug'];
+            const shouldSync = syncLabels.some(label => labels.includes(label));
+            
+            core.setOutput('should_sync', shouldSync);
+            
+            // Check if already synced (has synced-to-udi-js label)
+            const alreadySynced = labels.includes('synced-to-udi-js');
+            core.setOutput('already_synced', alreadySynced);
+            
+            return { shouldSync, alreadySynced };
+
+      - name: Copy issue to udi-js repository
+        if: steps.check.outputs.should_sync == 'true' && steps.check.outputs.already_synced == 'false'
+        id: create_issue
+        uses: actions/github-script@v7
+        env:
+          TARGET_REPO_OWNER: pradeepmouli
+          TARGET_REPO_NAME: udi-js
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issue = context.payload.issue;
+            
+            // Helper function to determine issue type
+            const getIssueType = (labels) => {
+              if (labels.some(l => l.name === 'device-support')) return 'device support request';
+              if (labels.some(l => l.name === 'bug')) return 'bug report';
+              return 'feature request';
+            };
+            
+            // Helper function to generate messages based on issue type
+            const getMessages = (issueType) => {
+              if (issueType === 'bug report') {
+                return {
+                  updateMessage: 'bug fix',
+                  whyMessage: 'Bug fixes and development are tracked in the udi-js repository where the source code lives.'
+                };
+              } else if (issueType === 'device support request') {
+                return {
+                  updateMessage: 'device support',
+                  whyMessage: 'Device support and compatibility work are tracked in the udi-js repository where the source code lives.'
+                };
+              } else {
+                return {
+                  updateMessage: 'feature',
+                  whyMessage: 'Feature development and enhancements are tracked in the udi-js repository where the source code lives.'
+                };
+              }
+            };
+            
+            // Prepare issue body with reference to original issue
+            const issueBody = `**Synced from:** ${issue.html_url}
+**Original Author:** @${issue.user.login}
+**Created:** ${issue.created_at}
+
+---
+
+${issue.body || 'No description provided.'}
+
+---
+
+*This issue was automatically created from the [iox-matter-bridge repository](${issue.html_url}).*`;
+            
+            try {
+              // Try to create issue in udi-js repository
+              // NOTE: This requires the GITHUB_TOKEN to have permissions to create issues
+              // in the target repository, or a PAT with appropriate permissions
+              let newIssue;
+              const issueType = getIssueType(issue.labels);
+              
+              try {
+                // Filter labels to only include those that are likely to exist in both repos
+                // Exclude repository-specific tracking labels
+                const labelsToSync = issue.labels
+                  .map(l => l.name)
+                  .filter(l => !['synced-to-udi-js', 'copilot-tracked', 'needs-triage'].includes(l));
+                
+                newIssue = await github.rest.issues.create({
+                  owner: process.env.TARGET_REPO_OWNER,
+                  repo: process.env.TARGET_REPO_NAME,
+                  title: `[iox-matter-bridge] ${issue.title}`,
+                  body: issueBody
+                });
+                
+                // Try to add labels if any exist, but don't fail if labels don't exist in target repo
+                if (labelsToSync.length > 0) {
+                  try {
+                    await github.rest.issues.addLabels({
+                      owner: process.env.TARGET_REPO_OWNER,
+                      repo: process.env.TARGET_REPO_NAME,
+                      issue_number: newIssue.data.number,
+                      labels: labelsToSync
+                    });
+                  } catch (labelError) {
+                    core.warning(`Could not add labels to udi-js issue: ${labelError.message}`);
+                  }
+                }
+                
+                core.info(`Created issue in udi-js: ${newIssue.data.html_url}`);
+                
+                // Add comment to original issue with link to new issue
+                const { updateMessage, whyMessage } = getMessages(issueType);
+                
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: `✅ **Issue Synced to udi-js**
+
+This ${issueType} has been automatically copied to the [udi-js repository](${newIssue.data.html_url}) where development occurs.
+
+**Next Steps:**
+- Development discussion will continue in the [udi-js issue](${newIssue.data.html_url})
+- This issue will remain open here for reference and tracking
+- Updates to the ${updateMessage} will be communicated through releases
+
+**Why?** The iox-matter-bridge repository is for release artifacts and deployment issues. ${whyMessage}`
+                });
+                
+              } catch (createError) {
+                // If we can't create the issue (likely due to permissions), guide the user
+                core.warning(`Could not create issue in udi-js: ${createError.message}`);
+                
+                const { whyMessage } = getMessages(issueType);
+                
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: `⚠️ **Action Required**
+
+This issue appears to be a ${issueType} that should be tracked in the [udi-js repository](https://github.com/${process.env.TARGET_REPO_OWNER}/${process.env.TARGET_REPO_NAME}).
+
+**Please follow these steps:**
+1. Visit the [udi-js repository](https://github.com/${process.env.TARGET_REPO_OWNER}/${process.env.TARGET_REPO_NAME}/issues/new)
+2. Create a new issue with the same information
+3. Reference this issue (${issue.html_url}) in your new issue
+
+**Why?** The iox-matter-bridge repository is for release artifacts and deployment issues. ${whyMessage}
+
+This issue will remain open here for reference but please continue the discussion in udi-js.`
+                });
+              }
+              
+              // Add label to indicate this has been processed
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: ['synced-to-udi-js']
+              });
+              
+              core.info('Issue sync process completed');
+              
+            } catch (error) {
+              core.setFailed(`Failed to process issue: ${error.message}`);
+            }
+
+      - name: Assign to copilot (if configured)
+        if: steps.check.outputs.should_sync == 'true' && steps.check.outputs.already_synced == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            
+            try {
+              // Add label for copilot tracking
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                labels: ['copilot-tracked']
+              });
+              
+              core.info('Added copilot-tracked label');
+            } catch (error) {
+              core.warning(`Could not add copilot label: ${error.message}`);
+            }
