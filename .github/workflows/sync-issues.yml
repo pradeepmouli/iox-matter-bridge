@@ -46,6 +46,13 @@ jobs:
           script: |
             const issue = context.payload.issue;
             
+            // Helper function to determine issue type
+            const getIssueType = (labels) => {
+              if (labels.some(l => l.name === 'device-support')) return 'device support request';
+              if (labels.some(l => l.name === 'bug')) return 'bug report';
+              return 'feature request';
+            };
+            
             // Prepare issue body with reference to original issue
             const issueBody = `**Synced from:** ${issue.html_url}
 **Original Author:** @${issue.user.login}
@@ -64,6 +71,7 @@ ${issue.body || 'No description provided.'}
               // NOTE: This requires the GITHUB_TOKEN to have permissions to create issues
               // in the target repository, or a PAT with appropriate permissions
               let newIssue;
+              const issueType = getIssueType(issue.labels);
               
               try {
                 // Filter labels to only include those that are likely to exist in both repos
@@ -96,11 +104,13 @@ ${issue.body || 'No description provided.'}
                 core.info(`Created issue in udi-js: ${newIssue.data.html_url}`);
                 
                 // Add comment to original issue with link to new issue
-                const issueType = issue.labels.some(l => l.name === 'device-support') 
-                  ? 'device support request' 
-                  : issue.labels.some(l => l.name === 'bug')
-                  ? 'bug report'
-                  : 'feature request';
+                const updateMessage = issueType === 'bug report' 
+                  ? 'bug fix' 
+                  : 'feature/device support';
+                
+                const whyMessage = issueType === 'bug report'
+                  ? 'Bug fixes and development are tracked in the udi-js repository where the source code lives.'
+                  : 'Feature development and enhancements are tracked in the udi-js repository where the source code lives.';
                 
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
@@ -113,20 +123,18 @@ This ${issueType} has been automatically copied to the [udi-js repository](${new
 **Next Steps:**
 - Development discussion will continue in the [udi-js issue](${newIssue.data.html_url})
 - This issue will remain open here for reference and tracking
-- Updates to the ${issueType === 'bug report' ? 'bug fix' : 'feature/device support'} will be communicated through releases
+- Updates to the ${updateMessage} will be communicated through releases
 
-**Why?** The iox-matter-bridge repository is for release artifacts and deployment issues. ${issueType === 'bug report' ? 'Bug fixes and' : 'Feature development and enhancements are'} tracked in the udi-js repository where the source code lives.`
+**Why?** The iox-matter-bridge repository is for release artifacts and deployment issues. ${whyMessage}`
                 });
                 
               } catch (createError) {
                 // If we can't create the issue (likely due to permissions), guide the user
                 core.warning(`Could not create issue in udi-js: ${createError.message}`);
                 
-                const issueType = issue.labels.some(l => l.name === 'device-support') 
-                  ? 'device support request' 
-                  : issue.labels.some(l => l.name === 'bug')
-                  ? 'bug report'
-                  : 'feature request';
+                const whyMessage = issueType === 'bug report'
+                  ? 'Bug fixes and development are tracked in the udi-js repository where the source code lives.'
+                  : 'Feature development and enhancements are tracked in the udi-js repository where the source code lives.';
                 
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
@@ -141,7 +149,7 @@ This issue appears to be a ${issueType} that should be tracked in the [udi-js re
 2. Create a new issue with the same information
 3. Reference this issue (${issue.html_url}) in your new issue
 
-**Why?** The iox-matter-bridge repository is for release artifacts and deployment issues. ${issueType === 'bug report' ? 'Bug fixes and development are' : 'Feature development and enhancements are'} tracked in the udi-js repository where the source code lives.
+**Why?** The iox-matter-bridge repository is for release artifacts and deployment issues. ${whyMessage}
 
 This issue will remain open here for reference but please continue the discussion in udi-js.`
                 });
