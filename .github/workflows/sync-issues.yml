@@ -23,7 +23,7 @@ jobs:
             const labels = issue.labels.map(l => l.name);
             
             // Check if this is a new issue that should be synced
-            const syncLabels = ['device-support', 'enhancement', 'feature-request'];
+            const syncLabels = ['device-support', 'enhancement', 'feature-request', 'bug'];
             const shouldSync = syncLabels.some(label => labels.includes(label));
             
             core.setOutput('should_sync', shouldSync);
@@ -96,25 +96,37 @@ ${issue.body || 'No description provided.'}
                 core.info(`Created issue in udi-js: ${newIssue.data.html_url}`);
                 
                 // Add comment to original issue with link to new issue
+                const issueType = issue.labels.some(l => l.name === 'device-support') 
+                  ? 'device support request' 
+                  : issue.labels.some(l => l.name === 'bug')
+                  ? 'bug report'
+                  : 'feature request';
+                
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: issue.number,
                   body: `✅ **Issue Synced to udi-js**
 
-This ${issue.labels.some(l => l.name === 'device-support') ? 'device support request' : 'feature request'} has been automatically copied to the [udi-js repository](${newIssue.data.html_url}) where development occurs.
+This ${issueType} has been automatically copied to the [udi-js repository](${newIssue.data.html_url}) where development occurs.
 
 **Next Steps:**
 - Development discussion will continue in the [udi-js issue](${newIssue.data.html_url})
 - This issue will remain open here for reference and tracking
-- Updates to the feature/device support will be communicated through releases
+- Updates to the ${issueType === 'bug report' ? 'bug fix' : 'feature/device support'} will be communicated through releases
 
-**Why?** The iox-matter-bridge repository is for release artifacts and deployment issues. Feature development and enhancements are tracked in the udi-js repository where the source code lives.`
+**Why?** The iox-matter-bridge repository is for release artifacts and deployment issues. ${issueType === 'bug report' ? 'Bug fixes and' : 'Feature development and enhancements are'} tracked in the udi-js repository where the source code lives.`
                 });
                 
               } catch (createError) {
                 // If we can't create the issue (likely due to permissions), guide the user
                 core.warning(`Could not create issue in udi-js: ${createError.message}`);
+                
+                const issueType = issue.labels.some(l => l.name === 'device-support') 
+                  ? 'device support request' 
+                  : issue.labels.some(l => l.name === 'bug')
+                  ? 'bug report'
+                  : 'feature request';
                 
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
@@ -122,14 +134,14 @@ This ${issue.labels.some(l => l.name === 'device-support') ? 'device support req
                   issue_number: issue.number,
                   body: `⚠️ **Action Required**
 
-This issue appears to be a ${issue.labels.some(l => l.name === 'device-support') ? 'device support request' : 'feature request'} that should be tracked in the [udi-js repository](https://github.com/${process.env.TARGET_REPO_OWNER}/${process.env.TARGET_REPO_NAME}).
+This issue appears to be a ${issueType} that should be tracked in the [udi-js repository](https://github.com/${process.env.TARGET_REPO_OWNER}/${process.env.TARGET_REPO_NAME}).
 
 **Please follow these steps:**
 1. Visit the [udi-js repository](https://github.com/${process.env.TARGET_REPO_OWNER}/${process.env.TARGET_REPO_NAME}/issues/new)
 2. Create a new issue with the same information
 3. Reference this issue (${issue.html_url}) in your new issue
 
-**Why?** The iox-matter-bridge repository is for release artifacts and deployment issues. Feature development and enhancements are tracked in the udi-js repository where the source code lives.
+**Why?** The iox-matter-bridge repository is for release artifacts and deployment issues. ${issueType === 'bug report' ? 'Bug fixes and development are' : 'Feature development and enhancements are'} tracked in the udi-js repository where the source code lives.
 
 This issue will remain open here for reference but please continue the discussion in udi-js.`
                 });
