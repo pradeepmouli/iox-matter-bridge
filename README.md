@@ -56,7 +56,7 @@ Pre-releases are available on this GitHub repository for testing and early acces
 
 2. **Verify the download:**
    ```bash
-   # Replace VERSION with the pre-release version (e.g., 1.5.0-beta.1)
+   # Replace X.Y.Z-beta.N with the pre-release version (e.g., 1.5.0-beta.1)
    VERSION="X.Y.Z-beta.N"
    sha256sum -c checksums-v${VERSION}.txt --ignore-missing
    ```
