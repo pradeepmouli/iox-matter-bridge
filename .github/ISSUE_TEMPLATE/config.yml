@@ -7,5 +7,5 @@ contact_links:
     url: https://github.com/pradeepmouli/iox-matter-bridge/releases
     about: Check release notes and documentation for usage information
   - name: Installation Guide
-    url: https://github.com/pradeepmouli/iox-matter-bridge/blob/main/docs/INSTALLATION.md
+    url: docs/INSTALLATION.md
     about: Detailed installation instructions for IoX Matter Bridge
