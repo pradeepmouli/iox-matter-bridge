@@ -57,13 +57,13 @@ Pre-releases are available on this GitHub repository for testing and early acces
 2. **Verify the download:**
    ```bash
    # Replace VERSION with the pre-release version (e.g., 1.5.0-beta.1)
-   VERSION="1.5.0-beta.1"
+   VERSION="X.Y.Z-beta.N"
    sha256sum -c checksums-v${VERSION}.txt --ignore-missing
    ```
 
 3. **Extract and install:**
    ```bash
-   # Extract the archive
+   # Extract the archive (using the same VERSION from above)
    tar -xzf iox-matter-bridge-v${VERSION}.tar.gz
    
    # Install to eisy (follow specific installation instructions in the release notes)
@@ -293,11 +293,11 @@ Found a new issue? Please [submit a bug report](.github/ISSUE_TEMPLATE/bug_repor
    - Ensure controller firmware is up to date
    - Try pairing with a different Matter controller
 
-3. Reset Matter credentials:
-   ```bash
-   # Remove stored credentials (requires reconfiguration)
-   # See documentation for your specific version
-   ```
+3. Reset Matter credentials (if necessary):
+   - Stop the bridge service
+   - Remove the Matter storage directory (location varies by installation)
+   - Restart the bridge to generate new pairing credentials
+   - For specific instructions, check the release notes for your version or consult the [Installation Guide](docs/INSTALLATION.md)
 
 #### High CPU or Memory Usage
 

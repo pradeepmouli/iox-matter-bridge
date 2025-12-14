@@ -68,10 +68,12 @@ jobs:
             `;
             
             try {
-              // Note: This will only work if the workflow has permissions to create issues in udi-js
-              // This typically requires a PAT with appropriate permissions stored in secrets
-              // For now, we'll create a comment on the original issue with instructions
+              // NOTE: Cross-repository issue creation requires a Personal Access Token (PAT)
+              // with appropriate permissions, which must be stored in repository secrets.
+              // The current implementation adds a comment guiding users to manually create
+              // the issue in udi-js, as automatic creation requires additional setup.
               
+              // Add a comment guiding the user to the udi-js repository
               const comment = await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
