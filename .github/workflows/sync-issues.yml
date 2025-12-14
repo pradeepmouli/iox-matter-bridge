@@ -104,13 +104,18 @@ ${issue.body || 'No description provided.'}
                 core.info(`Created issue in udi-js: ${newIssue.data.html_url}`);
                 
                 // Add comment to original issue with link to new issue
-                const updateMessage = issueType === 'bug report' 
-                  ? 'bug fix' 
-                  : 'feature/device support';
+                let updateMessage, whyMessage;
                 
-                const whyMessage = issueType === 'bug report'
-                  ? 'Bug fixes and development are tracked in the udi-js repository where the source code lives.'
-                  : 'Feature development and enhancements are tracked in the udi-js repository where the source code lives.';
+                if (issueType === 'bug report') {
+                  updateMessage = 'bug fix';
+                  whyMessage = 'Bug fixes and development are tracked in the udi-js repository where the source code lives.';
+                } else if (issueType === 'device support request') {
+                  updateMessage = 'device support';
+                  whyMessage = 'Device support and compatibility work are tracked in the udi-js repository where the source code lives.';
+                } else {
+                  updateMessage = 'feature';
+                  whyMessage = 'Feature development and enhancements are tracked in the udi-js repository where the source code lives.';
+                }
                 
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
@@ -132,9 +137,14 @@ This ${issueType} has been automatically copied to the [udi-js repository](${new
                 // If we can't create the issue (likely due to permissions), guide the user
                 core.warning(`Could not create issue in udi-js: ${createError.message}`);
                 
-                const whyMessage = issueType === 'bug report'
-                  ? 'Bug fixes and development are tracked in the udi-js repository where the source code lives.'
-                  : 'Feature development and enhancements are tracked in the udi-js repository where the source code lives.';
+                let whyMessage;
+                if (issueType === 'bug report') {
+                  whyMessage = 'Bug fixes and development are tracked in the udi-js repository where the source code lives.';
+                } else if (issueType === 'device support request') {
+                  whyMessage = 'Device support and compatibility work are tracked in the udi-js repository where the source code lives.';
+                } else {
+                  whyMessage = 'Feature development and enhancements are tracked in the udi-js repository where the source code lives.';
+                }
                 
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
