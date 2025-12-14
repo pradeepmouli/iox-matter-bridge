@@ -57,7 +57,7 @@ ${issue.body || 'No description provided.'}
 
 ---
 
-*This issue was automatically created from the [iox-matter-bridge repository](${issue.html_url}). Please keep discussions in this repository.*`;
+*This issue was automatically created from the [iox-matter-bridge repository](${issue.html_url}).*`;
             
             try {
               // Try to create issue in udi-js repository
@@ -66,15 +66,32 @@ ${issue.body || 'No description provided.'}
               let newIssue;
               
               try {
+                // Filter labels to only include those that are likely to exist in both repos
+                // Exclude repository-specific tracking labels
+                const labelsToSync = issue.labels
+                  .map(l => l.name)
+                  .filter(l => !['synced-to-udi-js', 'copilot-tracked', 'needs-triage'].includes(l));
+                
                 newIssue = await github.rest.issues.create({
                   owner: process.env.TARGET_REPO_OWNER,
                   repo: process.env.TARGET_REPO_NAME,
                   title: `[iox-matter-bridge] ${issue.title}`,
-                  body: issueBody,
-                  labels: issue.labels.map(l => l.name).filter(l => 
-                    !['synced-to-udi-js', 'copilot-tracked', 'needs-triage'].includes(l)
-                  )
+                  body: issueBody
                 });
+                
+                // Try to add labels if any exist, but don't fail if labels don't exist in target repo
+                if (labelsToSync.length > 0) {
+                  try {
+                    await github.rest.issues.addLabels({
+                      owner: process.env.TARGET_REPO_OWNER,
+                      repo: process.env.TARGET_REPO_NAME,
+                      issue_number: newIssue.data.number,
+                      labels: labelsToSync
+                    });
+                  } catch (labelError) {
+                    core.warning(`Could not add labels to udi-js issue: ${labelError.message}`);
+                  }
+                }
                 
                 core.info(`Created issue in udi-js: ${newIssue.data.html_url}`);
                 
