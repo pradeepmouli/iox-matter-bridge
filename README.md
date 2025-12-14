@@ -7,9 +7,9 @@
 
 ## 📖 What is IoX Matter Bridge?
 
-**IoX Matter Bridge** is a service that exposes your eisy (or ISY) home automation controller as a Matter bridge device on your Matter network. This allows you to:
+**IoX Matter Bridge** is a service that exposes your eISY home automation controller as a Matter bridge device on your Matter network. This allows you to:
 
-- ✅ **Control eisy devices** through Matter-compatible controllers (Apple Home, Google Home, Amazon Alexa, etc.)
+- ✅ **Control eISY devices** through Matter-compatible controllers (Apple Home, Google Home, Amazon Alexa, etc.)
 - ✅ **Integrate with Matter ecosystems** without replacing existing Insteon, Z-Wave, or other devices
 - ✅ **Maintain local control** with secure, standards-based Matter protocol
 - ✅ **Leverage existing automation** while expanding compatibility
