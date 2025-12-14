@@ -53,6 +53,26 @@ jobs:
               return 'feature request';
             };
             
+            // Helper function to generate messages based on issue type
+            const getMessages = (issueType) => {
+              if (issueType === 'bug report') {
+                return {
+                  updateMessage: 'bug fix',
+                  whyMessage: 'Bug fixes and development are tracked in the udi-js repository where the source code lives.'
+                };
+              } else if (issueType === 'device support request') {
+                return {
+                  updateMessage: 'device support',
+                  whyMessage: 'Device support and compatibility work are tracked in the udi-js repository where the source code lives.'
+                };
+              } else {
+                return {
+                  updateMessage: 'feature',
+                  whyMessage: 'Feature development and enhancements are tracked in the udi-js repository where the source code lives.'
+                };
+              }
+            };
+            
             // Prepare issue body with reference to original issue
             const issueBody = `**Synced from:** ${issue.html_url}
 **Original Author:** @${issue.user.login}
@@ -104,18 +124,7 @@ ${issue.body || 'No description provided.'}
                 core.info(`Created issue in udi-js: ${newIssue.data.html_url}`);
                 
                 // Add comment to original issue with link to new issue
-                let updateMessage, whyMessage;
-                
-                if (issueType === 'bug report') {
-                  updateMessage = 'bug fix';
-                  whyMessage = 'Bug fixes and development are tracked in the udi-js repository where the source code lives.';
-                } else if (issueType === 'device support request') {
-                  updateMessage = 'device support';
-                  whyMessage = 'Device support and compatibility work are tracked in the udi-js repository where the source code lives.';
-                } else {
-                  updateMessage = 'feature';
-                  whyMessage = 'Feature development and enhancements are tracked in the udi-js repository where the source code lives.';
-                }
+                const { updateMessage, whyMessage } = getMessages(issueType);
                 
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
@@ -137,14 +146,7 @@ This ${issueType} has been automatically copied to the [udi-js repository](${new
                 // If we can't create the issue (likely due to permissions), guide the user
                 core.warning(`Could not create issue in udi-js: ${createError.message}`);
                 
-                let whyMessage;
-                if (issueType === 'bug report') {
-                  whyMessage = 'Bug fixes and development are tracked in the udi-js repository where the source code lives.';
-                } else if (issueType === 'device support request') {
-                  whyMessage = 'Device support and compatibility work are tracked in the udi-js repository where the source code lives.';
-                } else {
-                  whyMessage = 'Feature development and enhancements are tracked in the udi-js repository where the source code lives.';
-                }
+                const { whyMessage } = getMessages(issueType);
                 
                 await github.rest.issues.createComment({
                   owner: context.repo.owner,
