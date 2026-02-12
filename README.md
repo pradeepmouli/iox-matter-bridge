@@ -170,7 +170,7 @@ IoX Matter Bridge supports various device types from your eisy controller. Suppo
 | **Temperature Sensors** | ⚠️ Partially Works | Basic temperature reporting (see Known Issues) |
 | **Thermostats** | ⚠️ Partially Works | Basic control, some features limited |
 | **Locks** | 🔄 May Work | Not extensively tested |
-| **Garage Door Openers** | 🔄 May Work | Not extensively tested |
+| **Garage Door Openers** | ❌ Not Supported | Version of Matter Protocol (v1.4) supported by matter.js (implementation that iox-matter-bridge uses) does not support garage doors.
 | **Fans** | 🔄 May Work | Speed control may be limited |
 | **Outlets/Plugs** | ✅ Works | Smart outlets and plug-in modules |
 | **Scenes** | ❌ Not Supported | eisy scenes not currently exposed |
@@ -184,7 +184,7 @@ IoX Matter Bridge supports various device types from your eisy controller. Suppo
 
 ### Tested Devices
 
-The bridge has been tested with various Insteon devices. For a complete list of tested devices and their specific capabilities, please see the [device compatibility discussion](https://github.com/pradeepmouli/iox-matter-bridge/discussions) or submit a [device support request](.github/ISSUE_TEMPLATE/device_support.md).
+The bridge has been tested with various Insteon and Zigbee devices. For a complete list of tested devices and their specific capabilities, please see the [device compatibility discussion](https://github.com/pradeepmouli/iox-matter-bridge/discussions) or submit a [device support request](.github/ISSUE_TEMPLATE/device_support.md).
 
 ### Request Device Support
 
