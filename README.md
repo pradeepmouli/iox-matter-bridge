@@ -137,7 +137,7 @@ We use GitHub Issues to track bugs, device support requests, and feature request
 - **Enable debug logging** if possible to capture more detailed information
 - **Include timestamps** to help correlate logs with the issue occurrence
 
-### What to Report Here vs. udi-js Repository
+### What to Report Here
 
 **Report in this repository (iox-matter-bridge):**
 - ✅ Installation/deployment problems
@@ -146,11 +146,6 @@ We use GitHub Issues to track bugs, device support requests, and feature request
 - ✅ Artifact verification failures
 - ✅ Device compatibility issues
 - ✅ Security vulnerabilities
-
-**Report in [udi-js repository](https://github.com/pradeepmouli/udi-js/issues):**
-- ❌ Development/build issues
-- ❌ Source code bugs
-- ❌ Contribution questions
 
 > **Note:** Feature requests and device support requests created here will be automatically tagged and may be redirected to the udi-js repository for tracking and development.
 
