@@ -36,6 +36,25 @@ For **feature requests**, **development issues**, or **code contributions**, ple
 
 ## 🚀 Quick Start
 
+### Standalone TUI for your computer
+
+Releases tagged **`tui-v…`** contain the terminal management app for macOS, Linux
+and Windows. Download your platform's `iox-matter-tui-*.tar.gz` and `SHA256SUMS`,
+verify the SHA256 hash, extract, and run the executable in a terminal. Its runtime
+is included; Node and Bun are not required. macOS builds are unsigned.
+
+Each archive includes an optional agent skill for installation, SSH setup and
+routine bridge operations. Install it locally from the extracted directory:
+
+```sh
+python3 install-skills.py --dest ~/.codex/skills
+```
+
+Existing skills are preserved. Use `--help` for connection options. These releases
+do not upgrade the eisy or migrate a plugin. The TUI targets the modern bridge;
+production bridge 1.3.24 compatibility is planned for the plugin independently.
+TUI and server versions are independent; server packages remain under `v…` tags.
+
 ### Installation on eisy
 
 **For stable releases (recommended):**

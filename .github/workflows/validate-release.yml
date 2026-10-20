@@ -9,8 +9,32 @@ permissions:
   issues: write
 
 jobs:
+  validate-tui:
+    name: Validate TUI archives
+    if: startsWith(github.event.release.tag_name, 'tui-v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download and verify TUI packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          mkdir artifacts
+          cd artifacts
+          gh release download "$TAG" --repo "$REPO"
+          test -s SHA256SUMS
+          sha256sum -c SHA256SUMS
+          for archive in iox-matter-tui-*.tar.gz; do
+            tar -tzf "$archive" > contents.txt
+            grep -q '/release.json$' contents.txt
+            grep -q '/agent-skills/iox-matter-tui/SKILL.md$' contents.txt
+            grep -q '/install-skills.py$' contents.txt
+          done
+
   validate-artifacts:
     name: Validate Release Artifacts
+    if: ${{ !startsWith(github.event.release.tag_name, 'tui-v') }}
     runs-on: ubuntu-latest
     
     steps:
