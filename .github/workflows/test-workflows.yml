@@ -1,0 +1,35 @@
+name: Test Workflow Automation
+
+on:
+  pull_request:
+    paths: ['.github/**', 'CONTRIBUTING.md']
+  push:
+    branches: [master]
+    paths: ['.github/**', 'CONTRIBUTING.md']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Validate workflows and regression tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: false
+      - name: Lint GitHub Actions workflows
+        run: |
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+          "$(go env GOPATH)/bin/actionlint" -color
+      - name: Run automation regression tests
+        run: node --test .github/tests/*.test.cjs .github/scripts/*.test.cjs

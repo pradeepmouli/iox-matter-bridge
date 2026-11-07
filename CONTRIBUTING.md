@@ -82,3 +82,56 @@ For questions about:
 ## License
 
 This project follows the same license as the udi-js monorepo. Check the source repository for details.
+
+## Workflow Maintenance
+
+Workflow scripts live in `.github/scripts/`. Run their regression tests with
+Node.js 22 or newer (and `tar` for the TUI fixtures):
+
+```sh
+node --test .github/tests/*.test.cjs .github/scripts/*.test.cjs
+```
+
+The **Test Workflow Automation** workflow also validates GitHub Actions YAML and
+expressions with `actionlint` on pull requests and pushes to `master`.
+
+### Cross-repository issue synchronization
+
+The **Sync Issues to udi-js** workflow copies issues labeled `bug`, `enhancement`,
+or `device-support`. GitHub's automatic `GITHUB_TOKEN` can only update this
+repository, so copying to `udi-js` requires a separately authorized repository
+secret named `UDI_JS_ISSUES_TOKEN`. Use a fine-grained personal access token limited to **Issues: read and
+write** on `pradeepmouli/udi-js` (plus GitHub's required metadata access). It does
+not need code write access or access to this source repository. Source comments
+and labels continue to use the source repository's `GITHUB_TOKEN`.
+
+Provisioning or changing that credential is a separate maintainer action. No
+credential is created by these workflows. If the secret is absent, the workflow
+fails with a configuration message without claiming the issue was synced.
+
+The `synced-to-udi-js` label is applied only after a target issue exists and its
+link has been posted to the source issue. Runs are serialized per issue. A retry
+reuses a target issue and source comment from a previous partial run. To retry a
+failed run or process an older issue, dispatch the workflow with its issue number.
+The `copilot-tracked` label is only a tracking label, not a Copilot assignment.
+
+### Release validation
+
+The **Validate Release Artifacts** workflow checks bridge releases for
+`iox_matter_bridge-<version>.pkg` and `download_build.sh`. Required files must be
+nonempty and match a SHA-256 digest from GitHub's release asset metadata or a
+published `SHA256SUMS` / `checksums-v<version>.txt` manifest. If both sources are
+present, both must match. A separate legacy tarball is not required.
+
+Standalone `tui-v...` releases still require TUI archives, `SHA256SUMS` coverage,
+and the expected release metadata, skill, and skill installer archive entries.
+Optional SBOMs are checked for JSON syntax when supplied; signature presence is
+reported without claiming cryptographic authenticity. Packages and installers
+are never executed by validation.
+
+Missing, corrupt, or unverifiable required artifacts make the job fail. Download
+failures also fail rather than being ignored. Results are retained as an Actions
+artifact and job summary, without automatically creating duplicate issue reports.
+To recheck an existing release, dispatch this workflow with its published tag
+(for example `v2.0.7`). On release events, validation uses the maintained scripts
+on the repository's default branch, even when the release tag predates them.
