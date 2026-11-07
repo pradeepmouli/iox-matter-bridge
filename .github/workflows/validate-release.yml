@@ -23,8 +23,9 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       REPO: ${{ github.repository }}
     steps:
-      # Release tags may predate these scripts. Run the maintained validator,
-      # not code included in the downloaded release.
+      # This checkout uses maintained scripts only when the release tag already
+      # contains this workflow. Tags with older YAML need manual dispatch from
+      # the default branch; checkout cannot replace their workflow definition.
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event_name == 'release' && github.event.repository.default_branch || github.ref }}

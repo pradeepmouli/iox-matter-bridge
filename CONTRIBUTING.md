@@ -133,6 +133,20 @@ are never executed by validation.
 Missing, corrupt, or unverifiable required artifacts make the job fail. Download
 failures also fail rather than being ignored. Results are retained as an Actions
 artifact and job summary, without automatically creating duplicate issue reports.
-To recheck an existing release, dispatch this workflow with its published tag
-(for example `v2.0.7`). On release events, validation uses the maintained scripts
-on the repository's default branch, even when the release tag predates them.
+To recheck an existing release after this workflow is on the default branch,
+open **Actions → Validate Release Artifacts → Run workflow**, select the default
+branch (`master`) under **Use workflow from**, and enter the published release
+tag (for example `v2.0.7`) in the **tag** input. This runs the current workflow and
+validator against the older release's assets. The equivalent CLI command is:
+
+```sh
+gh workflow run validate-release.yml --repo pradeepmouli/iox-matter-bridge --ref master -f tag=v2.0.7
+```
+
+Release events load the workflow YAML from the release tag. Tags that contain
+this updated workflow check out the maintained validator from the default
+branch. Older tags such as `v2.0.7` still contain the obsolete inline tarball
+validator: re-publishing them or rerunning their old release-triggered jobs does
+not switch to this workflow and can produce the old validation alerts. Use the
+default-branch manual dispatch above for those releases; the checkout ref only
+controls scripts after the selected workflow has started.
