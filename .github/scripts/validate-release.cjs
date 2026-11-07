@@ -31,7 +31,7 @@ try {
   notes.push(`Release: ${tag}`);
   const tui = tag.startsWith('tui-v');
   const checksums = new Map();
-  const manifests = [...assets.keys()].filter(name => name === 'SHA256SUMS' || name === `checksums-v${version}.txt`);
+  const manifests = [...assets.keys()].filter(name => name === 'SHA256SUMS' || (!tui && name === `checksums-v${version}.txt`));
   if (tui && !assets.has('SHA256SUMS')) fail('Missing required SHA256SUMS');
   for (const name of manifests) {
     try {

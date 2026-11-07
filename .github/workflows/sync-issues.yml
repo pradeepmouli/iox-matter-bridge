@@ -47,14 +47,16 @@ jobs:
               token: process.env.UDI_JS_ISSUES_TOKEN,
             });
             core.setOutput('should_sync', issue !== null);
-            return issue;
+            if (issue) {
+              // Keep large report bodies out of step outputs and environment entries.
+              require('node:fs').writeFileSync('source-issue.json', JSON.stringify(issue));
+              core.setOutput('issue_number', issue.number);
+            }
 
       - name: Copy issue to udi-js repository
         if: steps.check.outputs.should_sync == 'true'
         id: copy
         uses: actions/github-script@v7
-        env:
-          SOURCE_ISSUE: ${{ steps.check.outputs.result }}
         with:
           # GITHUB_TOKEN is scoped to this repository and cannot create an issue
           # in udi-js. This separately provisioned secret only needs target access.
@@ -63,7 +65,7 @@ jobs:
             const { copyIssue } = require('./.github/scripts/sync-issues.cjs');
             return await copyIssue({
               github, context, core,
-              issue: JSON.parse(process.env.SOURCE_ISSUE),
+              issue: JSON.parse(require('node:fs').readFileSync('source-issue.json', 'utf8')),
               target: { owner: process.env.TARGET_REPO_OWNER, repo: process.env.TARGET_REPO_NAME },
             });
 
@@ -71,7 +73,7 @@ jobs:
         if: steps.check.outputs.should_sync == 'true' && steps.copy.outcome == 'success'
         uses: actions/github-script@v7
         env:
-          SOURCE_ISSUE: ${{ steps.check.outputs.result }}
+          SOURCE_ISSUE_NUMBER: ${{ steps.check.outputs.issue_number }}
           SYNCED_ISSUE: ${{ steps.copy.outputs.result }}
         with:
           # Source comments and labels use only this repository's GITHUB_TOKEN.
@@ -79,7 +81,7 @@ jobs:
             const { markSynced } = require('./.github/scripts/sync-issues.cjs');
             await markSynced({
               github, context,
-              issue: JSON.parse(process.env.SOURCE_ISSUE),
+              issue: { number: Number(process.env.SOURCE_ISSUE_NUMBER) },
               synced: JSON.parse(process.env.SYNCED_ISSUE),
               target: { owner: process.env.TARGET_REPO_OWNER, repo: process.env.TARGET_REPO_NAME },
             });

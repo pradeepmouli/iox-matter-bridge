@@ -135,3 +135,17 @@ test('untrusted source comments cannot suppress the official synchronization lin
   await markSynced({ github: source.github, context, issue: original, synced, target });
   assert.equal(source.comments.length, 2);
 });
+
+for (const issueNumber of ['080', '8e1', '+80', '80.0', ' 80', '0x50', '80 ', '80\n', '', '9007199254740992']) {
+  test(`rejects noncanonical issue number ${JSON.stringify(issueNumber)} before any API call`, async () => {
+    const source = api();
+    await assert.rejects(prepareSync({ github: source.github, context, issueNumber, token: 'configured' }), /positive integer/);
+    assert.equal(source.calls.length, 0);
+  });
+}
+
+test('canonical manual input uses the same issue number as an issue event', async () => {
+  const source = api();
+  assert.equal((await prepareSync({ github: source.github, context, issueNumber: '80', token: 'configured' })).number, 80);
+  assert.equal(source.calls[0][1].issue_number, 80);
+});

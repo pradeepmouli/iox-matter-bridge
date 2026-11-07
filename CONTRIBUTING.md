@@ -112,7 +112,8 @@ fails with a configuration message without claiming the issue was synced.
 The `synced-to-udi-js` label is applied only after a target issue exists and its
 link has been posted to the source issue. Runs are serialized per issue. A retry
 reuses a target issue and source comment from a previous partial run. To retry a
-failed run or process an older issue, dispatch the workflow with its issue number.
+failed run or process an older issue, dispatch the workflow with its canonical
+decimal issue number (for example `80`, not `080` or `8e1`).
 The `copilot-tracked` label is only a tracking label, not a Copilot assignment.
 
 ### Release validation

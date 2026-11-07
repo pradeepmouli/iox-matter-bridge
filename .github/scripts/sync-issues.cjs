@@ -8,8 +8,8 @@ function marker(context, issue) {
 
 async function prepareSync({ github, context, issueNumber, token }) {
   const number = Number(issueNumber);
-  if (!Number.isSafeInteger(number) || number <= 0) {
-    throw new Error('The issue number must be a positive integer.');
+  if (!/^[1-9][0-9]*$/.test(String(issueNumber)) || !Number.isSafeInteger(number)) {
+    throw new Error('The issue number must be a positive integer in canonical decimal form (for example 80, not 080 or 8e1).');
   }
   // Events may have queued before an earlier run finished. Check current state.
   const { data: issue } = await github.rest.issues.get({ ...context.repo, issue_number: number });

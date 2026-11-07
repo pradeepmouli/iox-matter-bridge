@@ -70,3 +70,20 @@ test('requires each TUI archive to be included in SHA256SUMS', t => {
   f.release.assets[1].size = Buffer.byteLength(sums); f.release.assets.push({ name: 'README.txt', size: readme.length });
   const r = f.run(); assert.equal(r.status, 1); assert.match(r.report, /TUI archive missing from SHA256SUMS/);
 });
+
+test('secondary bridge manifest cannot supply required TUI SHA256SUMS coverage', t => {
+  const f = tui(t); const archive = f.release.assets[0];
+  const fallbackName = 'checksums-vtui-v1.0.0.txt';
+  const fallback = fs.readFileSync(path.join(f.dir, 'SHA256SUMS'), 'utf8');
+  fs.writeFileSync(path.join(f.dir, fallbackName), fallback);
+  f.release.assets.push({ name: fallbackName, size: Buffer.byteLength(fallback) });
+  const readme = 'readme'; fs.writeFileSync(path.join(f.dir, 'README.txt'), readme);
+  const sums = `${hash(readme)}  README.txt\n`;
+  fs.writeFileSync(path.join(f.dir, 'SHA256SUMS'), sums);
+  f.release.assets[1].size = Buffer.byteLength(sums);
+  f.release.assets.push({ name: 'README.txt', size: readme.length });
+  archive.digest = `sha256:${hash(fs.readFileSync(path.join(f.dir, archive.name)))}`;
+  const result = f.run();
+  assert.equal(result.status, 1);
+  assert.match(result.report, /TUI archive missing from SHA256SUMS/);
+});
