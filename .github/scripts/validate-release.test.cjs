@@ -26,6 +26,46 @@ function fixture(t, tag = 'v2.0.7', files = { 'iox_matter_bridge-2.0.7.pkg': 'pa
 test('accepts published pkg and installer with GitHub SHA-256 digests, without obsolete tarball', t => {
   const r = fixture(t).run(); assert.equal(r.status, 0, r.stderr); assert.match(r.report, /PASS/);
 });
+for (const [tag, packageName] of [
+  ['v2.1.0-beta.1', 'iox_matter_bridge-2.1.0_beta1.pkg'],
+  ['v2.1.0-rc.12', 'iox_matter_bridge-2.1.0_rc12.pkg'],
+  ['v2.1.0+build.3', 'iox_matter_bridge-2.1.0_3.pkg'],
+  ['v2.1.0-beta.1+build.3', 'iox_matter_bridge-2.1.0_beta1_3.pkg'],
+]) {
+  test(`accepts producer-normalized package for ${tag}`, t => {
+    const r = fixture(t, tag, { [packageName]: 'package', 'download_build.sh': 'installer' }).run();
+    assert.equal(r.status, 0, r.report);
+  });
+}
+function beta(t, packageName = 'iox_matter_bridge-2.1.0_beta1.pkg') {
+  return fixture(t, 'v2.1.0-beta.1', { [packageName]: 'package', 'download_build.sh': 'installer' });
+}
+test('requires the exact normalized prerelease package, not any package', t => {
+  const r = beta(t, 'iox_matter_bridge-2.1.0_beta2.pkg').run();
+  assert.equal(r.status, 1);
+  assert.match(r.report, /Missing required release asset: iox_matter_bridge-2\.1\.0_beta1\.pkg/);
+});
+test('rejects an unnormalized prerelease package name', t => {
+  assert.equal(beta(t, 'iox_matter_bridge-2.1.0-beta.1.pkg').run().status, 1);
+});
+test('requires integrity information for the normalized prerelease package', t => {
+  const f = beta(t); delete f.release.assets[0].digest;
+  const r = f.run(); assert.equal(r.status, 1);
+  assert.match(r.report, /No SHA-256 integrity information: iox_matter_bridge-2\.1\.0_beta1\.pkg/);
+});
+test('rejects a mismatched digest for the normalized prerelease package', t => {
+  const f = beta(t); f.release.assets[0].digest = `sha256:${'0'.repeat(64)}`;
+  const r = f.run(); assert.equal(r.status, 1); assert.match(r.report, /SHA-256 mismatch/);
+});
+test('uses the original release version for prerelease checksum manifests', t => {
+  const f = beta(t);
+  const sums = f.release.assets.map(a => `${a.digest.slice(7)}  ${a.name}`).join('\n');
+  for (const a of f.release.assets) a.digest = null;
+  const name = 'checksums-v2.1.0-beta.1.txt';
+  fs.writeFileSync(path.join(f.dir, name), sums);
+  f.release.assets.push({ name, size: Buffer.byteLength(sums) });
+  const r = f.run(); assert.equal(r.status, 0, r.report);
+});
 for (const name of ['iox_matter_bridge-2.0.7.pkg', 'download_build.sh']) {
   test(`fails missing required ${name}`, t => { const f = fixture(t); fs.unlinkSync(path.join(f.dir, name)); const r = f.run(); assert.equal(r.status, 1); assert.match(r.report, /FAIL/); });
 }
