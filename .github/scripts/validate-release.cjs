@@ -27,6 +27,9 @@ try {
   }
   const tag = release.tag_name;
   const version = tag.replace(/^v/, '');
+  // Match udi-js/.github/workflows/build-matter.yaml's FreeBSD package naming.
+  // Keep the release version unchanged for tag-based checksum manifest names.
+  const packageVersion = version.replace(/-([a-zA-Z]+)\.([0-9]*)/, '_$1$2').replace(/\+build\.([0-9]+)$/, '_$1');
   if (!/^[A-Za-z0-9][A-Za-z0-9._+-]*$/.test(tag)) throw new Error('Unsupported release tag');
   notes.push(`Release: ${tag}`);
   const tui = tag.startsWith('tui-v');
@@ -49,7 +52,7 @@ try {
     } catch (error) { fail(error.message); }
   }
   const archives = [...assets.keys()].filter(name => /^iox-matter-tui-.+\.tar\.gz$/.test(name));
-  const required = tui ? archives : [`iox_matter_bridge-${version}.pkg`, 'download_build.sh'];
+  const required = tui ? archives : [`iox_matter_bridge-${packageVersion}.pkg`, 'download_build.sh'];
   if (tui && !archives.length) fail('No TUI archives found');
   for (const name of required) if (!assets.has(name)) fail(`Missing required release asset: ${name}`);
   for (const [name, asset] of assets) {
